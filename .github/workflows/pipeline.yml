@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: airflow-dbt-json-duckdb-pipeline
+  cancel-in-progress: true
+
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
@@ -50,6 +54,9 @@ jobs:
 
       - name: Initialize Airflow metadata database
         run: airflow db migrate
+
+      - name: Prepare data directories
+        run: mkdir -p data/bronze data/silver data/gold data/warehouse
 
       - name: Validate dbt project
         run: dbt debug --project-dir dbt_project --profiles-dir dbt_project
