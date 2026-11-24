@@ -1,0 +1,8 @@
+sales_json_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/warehouse/sales.duckdb') }}"
+      schema: main
+      threads: 1
