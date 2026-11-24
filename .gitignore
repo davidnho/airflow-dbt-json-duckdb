@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.airflow/
+logs/
+target/
+dbt_packages/
+.DS_Store
+data/bronze/*
+!data/bronze/.gitkeep
+data/silver/*
+!data/silver/.gitkeep
+data/gold/*
+!data/gold/.gitkeep
+data/warehouse/*
+!data/warehouse/.gitkeep
