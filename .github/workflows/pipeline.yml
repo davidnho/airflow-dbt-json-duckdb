@@ -27,6 +27,8 @@ jobs:
     timeout-minutes: 30
     env:
       AIRFLOW_HOME: ${{ github.workspace }}/.airflow
+      AIRFLOW__CORE__DAGS_FOLDER: ${{ github.workspace }}/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       PIPELINE_ROOT: ${{ github.workspace }}
       DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
       DUCKDB_PATH: ${{ github.workspace }}/data/warehouse/sales.duckdb
@@ -60,6 +62,12 @@ jobs:
 
       - name: Validate dbt project
         run: dbt debug --project-dir dbt_project --profiles-dir dbt_project
+
+      - name: Verify DAG is discovered
+        run: |
+          airflow dags list
+          airflow dags list-import-errors
+          airflow dags list | grep -q "sales_json_duckdb_pipeline"
 
       - name: Run Airflow DAG
         run: airflow dags test sales_json_duckdb_pipeline 2026-01-01
