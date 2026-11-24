@@ -18,7 +18,7 @@ def convert_csv_to_jsonl(source: Path, destination: Path) -> int:
             raise ValueError(f"CSV has no header: {source}")
         with destination.open("w", encoding="utf-8") as json_file:
             for row in reader:
-                json_file.write(json.dumps(row, ensure_ascii=False) + "\\n")
+                json_file.write(json.dumps(row, ensure_ascii=False) + "\n")
                 count += 1
     print(f"Converted {count} rows: {source.name} -> {destination}")
     return count
