@@ -1,0 +1,70 @@
+name: Airflow + dbt JSON/DuckDB Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # 10:00 AM Philippines time (UTC+8)
+  push:
+    branches: [master]
+    paths:
+      - "dags/**"
+      - "dbt_project/**"
+      - "scripts/**"
+      - "data/input/**"
+      - ".github/workflows/pipeline.yml"
+      - "requirements.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AIRFLOW_HOME: ${{ github.workspace }}/.airflow
+      PIPELINE_ROOT: ${{ github.workspace }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+      DUCKDB_PATH: ${{ github.workspace }}/data/warehouse/sales.duckdb
+      PYTHONPATH: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Apache Airflow
+        run: |
+          AIRFLOW_VERSION=2.10.5
+          PYTHON_VERSION=3.11
+          CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+          pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+
+      - name: Install dbt and DuckDB
+        run: pip install -r requirements.txt
+
+      - name: Initialize Airflow metadata database
+        run: airflow db migrate
+
+      - name: Validate dbt project
+        run: dbt debug --project-dir dbt_project --profiles-dir dbt_project
+
+      - name: Run Airflow DAG
+        run: airflow dags test sales_json_duckdb_pipeline 2026-01-01
+
+      - name: Upload pipeline output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-output
+          path: |
+            data/bronze/
+            data/gold/
+            data/warehouse/
+          if-no-files-found: warn
+          retention-days: 14
