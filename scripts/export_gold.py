@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 import os
 from pathlib import Path
 import duckdb
@@ -31,8 +32,10 @@ def main():
         ]
     finally:
         con.close()
+    # DuckDB DECIMAL values are Python Decimal objects; convert them to JSON numbers.
     with OUTPUT.open("w", encoding="utf-8") as file:
-        json.dump(records, file, indent=2, ensure_ascii=False)
+        json.dump(records, file, indent=2, ensure_ascii=False,
+                  default=lambda value: float(value) if isinstance(value, Decimal) else value)
     print(f"Exported {len(records)} Gold records to {OUTPUT}")
 
 
